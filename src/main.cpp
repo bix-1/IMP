@@ -74,19 +74,33 @@ typedef struct
     std::vector<Note> notes;
 } Song;
 
+const std::vector<Note> tmp = {
+  {329.63, 150}, {0.0, 10},     {329.63, 450}, {369.99, 450},  {329.63, 750},
+  {0.00, 600},   {369.99, 300}, {329.63, 150}, {369.99, 300},  {440.00, 1050},
+  {0.00, 300},   {493.88, 150}, {0.0, 10},     {493.88, 450},  {554.37, 450},
+  {493.88, 750}, {369.99, 300}, {0.0, 10},     {369.99, 300},  {0.0, 10},
+  {369.99, 300}, {329.63, 300}, {0.0, 10},     {369.99, 150},  {440.00, 900},
+  {0.00, 600},   {329.63, 450}, {0.0, 10},     {329.63, 450},  {369.99, 450},
+  {0.0, 10},     {329.63, 750}, {0.0, 10},     {369.99, 150},  {0.0, 10},
+  {369.99, 450}, {440.00, 150}, {0.0, 10},     {440.00, 450},  {554.37, 1200},
+  {493.88, 300}, {0.0, 10},     {493.88, 300}, {0.0, 10},      {493.88, 300},
+  {0.0, 10},     {493.88, 300}, {554.37, 450}, {493.88, 1050}, {369.99, 300},
+  {440.00, 300}, {0.0, 10},     {440.00, 300}, {493.88, 150},  {440.00, 600},
+};
+const Song sng = {"9999", tmp};
+
 /****************************************************************/
 /*****************************GLOBALS****************************/
-Mode mode = play;               // current play mode
-Play_state play_state = idle;   // current play state
-int song = 0;                   // song to play
-bool has_song = false;          // is song selected
-double tone = 0;                // tone to play
-int tone_i = -1;                // index of tone to play
-const int MAX_CODE_L = 4;       // max length of song code
-char song_code[MAX_CODE_L + 1]; // code of song to be saved
-std::vector<Note> song_notes;   // notes recorded in song
-std::vector<Song> songs;        // db of songs
-unsigned long start;            // start time of key press/release
+Mode mode = play;                // current play mode
+Play_state play_state = idle;    // current play state
+const int MAX_CODE_L = 4;        // max length of song code
+char song[MAX_CODE_L + 1];       // song to play
+char song_code[MAX_CODE_L + 1];  // code of song to be saved
+double tone = 0;                 // tone to play
+int tone_i = -1;                 // index of tone to play
+std::vector<Note> song_notes;    // notes recorded in song
+std::vector<Song> songs = {sng}; // db of songs
+unsigned long start;             // start time of key press/release
 
 /******************************************************************/
 /*****************************FUNCTIONS****************************/
@@ -103,7 +117,7 @@ void handle_switch_state(int index);
 // handle scale shifting
 void handle_change_scale(int index);
 // play song from song db
-void play_song(int code);
+void play_song(char* code);
 
 // main setup function
 void setup()
@@ -209,8 +223,7 @@ void loop()
                     case '#':
                         if (mode == song_wait)
                         {
-                            mode = song_play;
-                            has_song = true;
+                            switch_mode(song_play);
                             play_song(song);
                         }
                         break;
@@ -223,12 +236,9 @@ void loop()
                     default:
                         if (key.kchar >= '1' && key.kchar <= '9')
                         {
-                            if (has_song)
-                            {
-                                song = 0;
-                                has_song = false;
-                            }
-                            song = (song * 10) + key.kchar - '0';
+                            const int pos = strlen(song);
+                            if (pos < MAX_CODE_L)
+                                song[pos] = key.kchar;
                         }
                         break;
                 }
@@ -330,8 +340,7 @@ void switch_mode(Mode m)
 
         case song_wait:
             set_tone(-1);
-            song = 0;
-            has_song = false;
+            memset(song, 0, MAX_CODE_L * sizeof(char));
             for (int i = 0; i < LIST_MAX; i++)
                 keypad.key[i].kstate = IDLE;
             break;
@@ -380,17 +389,15 @@ void handle_change_scale(int index)
     }
 }
 
-void play_song(int code)
+void play_song(char* code)
 {
-    char song[MAX_CODE_L];
-    sprintf(song, "%d", code);
-    auto it = std::find_if(songs.begin(), songs.end(), [song](const Song& s) {
-        return !strcmp(s.code.c_str(), song);
+    auto it = std::find_if(songs.begin(), songs.end(), [code](const Song& s) {
+        return !strcmp(s.code.c_str(), code);
     });
     if (it != songs.end())
     {
         Serial.print("Playing: ");
-        Serial.println(song);
+        Serial.println(code);
 
         for (auto& n : it->notes)
         {
@@ -402,7 +409,7 @@ void play_song(int code)
     else
     {
         Serial.print("No song with code ");
-        Serial.println(song);
+        Serial.println(code);
     }
     switch_mode(song_wait);
 }
