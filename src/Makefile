@@ -9,7 +9,7 @@ LOGIN = xbartk07
 
 pack: $(LOGIN).tar
 
-$(LOGIN).tar: *.cpp Makefile
+$(LOGIN).tar: *.cpp Makefile ../platformio.ini
 	tar -cvf $@ $^ --transform 's,^,$(LOGIN)/src/,'
 	cd ../doc && tar --append --file=../src/$@ documentation.pdf --transform 's,^,$(LOGIN)/,'
 
