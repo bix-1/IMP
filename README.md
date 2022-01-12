@@ -3,7 +3,7 @@ Project for course [Microprocessors and Embedded Systems](https://www.fit.vut.cz
 
 ## Description
 - Musical instrument simulator using WeMos D1 R32 UNO ESP32 board.
-- [Documentation](https://github.com/bix-1/IMP/blob/master/doc.pdf)
+- [Documentation](https://github.com/bix-1/IMP/blob/master/doc/documentation.pdf)
 
 ## Assignment
 
